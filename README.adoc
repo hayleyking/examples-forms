@@ -183,11 +183,11 @@ the output will contain the `p` element with the associated message if the messa
 Most values in Python are considered logically true,
 which Python refers to at _truthy_.
 Values that are not considered _truthy_
-include
-`None`,
-`False`,
-zero of any numeric type,
-an empty string, tuple, array, or dictionary.
+include:
+
+* Python values `None` and `False`
+* Zero of any numeric type,
+* An empty string, tuple, array, or dictionary.
 ****
 
 Referring back to the `sign_up` view function,
