@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Raw Form Example{% endblock %}
+
+{% block content %}
+    <form method="POST">
+        <p>
+            <label for="first">First Name</label>
+            <input id="first" name="firstname" type="text">
+        </p>
+        <p>
+            <label for="last">Last Name</label>
+            <input id="last" name="lastname" type="text">
+        </p>
+        <input type="submit" value="Sign Me Up">
+    </form>
+{% endblock %}
