@@ -1,3 +1,166 @@
-= examples-forms
+= Forms in Flask
 
-Examples of Flask forms
+An HTML form a the primary user interface element that allows
+a web application user to send data back to the web server.
+
+== Get vs Post
+
+When submitting a form,
+a web browser makes an HTTP POST request to the server
+(see http://www.w3schools.com/tags/ref_httpmethods.asp[Get vs Post]).
+A POST request indicates that the server should handle data submitted by the user
+(e.g., by storing something in the application's database).
+This is in contrast to a GET request,
+which is the usual way to request data from the web server
+without causing anything to be stored in the application database.
+
+== Form Handling
+
+Handling an HTML form usually proceeds as follows:
+
+. The browser sends a GET request to retrieve the HTML page that contains the empty form
+. The user fills out the form and hits a `submit` button
+. The browser sends a POST request to the server; the POST request contains the data entered into the form by the user
+. The server recieves the POST request and validates the contents of the form
+  (e.g., checks for any missing or malformed fields)
+. If the form passes validation
+.. The server acts on the form data
+   (e.g., registers a new user, logs in a user, creates a new order, adds a product to a shopping cart, etc.)
+.. The server _redirects_ the browser to a confirmation page
+. If the form fails validation
+.. The server returns the partially completed form to ther user,
+   usually with an indication of the reason(s) that the form failed to validate
+.. The user updates the form and resubmits it for re-validation
+
+== Form Handling in Flask
+
+The following markup shows a simple form that
+requests a users first and last names.
+The form contains
+
+* A `method` attribute of `POST`, which informs the browser to use a POST
+  request when sending the form to the server
+* A `submit` element that the user clicks to cause the POST request to be sent
+* For each field in the form, an `input` element of the appropriate type
+  (in this case both are `text` elements)
+  that also have a `name` attribute.
+  The `name` attribute is what identifies the value of the form field
+  when the form is submitted to the server.
+
+[source,html]
+.sign-up.html
+----
+<form method="POST">
+    <p>
+        <label for="first">First Name</label>
+        <input id="first" name="firstname" type="text">
+    </p>
+    <p>
+        <label for="last">Last Name</label>
+        <input id="last" name="lastname" type="text">
+    </p>
+    <input type="submit" value="Sign Me Up">
+</form>
+----
+
+By default, a Flask view function responds only to GET requests.
+In order to let Flask know that the view function should respond to _both_
+GET and POST requests, supply the `methods` argument to the `route` method as shown below.
+(There are other HTTP verbs to which Flask can respond, but these are the most common.)
+
+[source,python]
+----
+@app.route('/sign-up', methods=['GET', 'POST'])
+----
+
+Having specified that the view function can respond to GET or POST requests,
+the code needs to determine which request has actually been received.
+Flask's built-in `request` object gives the view function access to
+all the information contained in the HTTP request object.
+Two attributes of the request object are commonly used.
+
+. The `method` attribute contains a string indicating the type of HTTP request (`GET` or `POST`)
+. The 'form` attribute acts like a dictionary, giving access to the value supplied to each form field.
+  The dictionary's keys correspond to the `name` attributes provided to each `input` element in the form.
+
+A common design pattern for a view function that handles forms is to structure it as follows:
+
+----
+If handling a POST:
+    Extract form details
+    If form is not valid:
+        Create error message
+    Else:
+        Redirect to confirmation page
+Send the form to the browser
+----
+
+The initial request for the page containing a form
+will be a GET request, so all the code that handles a POST will be skipped.
+The function sends the (empty) form to the browser.
+
+When the form is submitted,
+the browser will issue a POST request.
+The view function extracts details from the form
+and uses this information to validate the request.
+If validation fails, the function creates one or more error messages
+and resends the form to the user with the error messages included.
+If the validation succeeds,
+the function redirects the browser to a confirmation page.
+
+Here is a view function that processes the form from `sign-up.html`.
+
+[source,python]
+----
+@app.route('/sign-up', methods=['GET', 'POST'])
+def sign_up():
+    error = ""
+    if request.method == 'POST':
+        # Form being submitted; grab data from form.
+        first_name = request.form['firstname']
+        last_name = request.form['lastname']
+
+        # Validate form data
+        if len(first_name) == 0 or len(last_name) == 0:
+            # Form data failed validation; try again
+            error = "Please supply both first and last name"
+        else:
+            # Form data is valid; move along
+            return redirect(url_for('thank_you'))
+
+    # Render the sign-up page
+    return render_template('sign-up.html', message=error)
+----
+
+If the request is a POST,
+the function extracts the content of the form from the `request.form`
+dictionary, using the `name` attributes from the HTML `input` elements
+as keys.
+
+The function does only trivial validation, checking that both fields have a non-empty value.
+If either field is empty,
+the function sets the `error` variable to an error string.
+There is nothing special about the `error` variable; it's an ordinary Python variable.
+The value of the error variable will be passed to the template
+for display to the user.
+
+If the form passes validation,
+the user will be redirected to a conformation page.
+In a real application,
+the view function would first process the form
+(e.g., storing information in the application database).
+
+== Error Handling
+
+== Browser Redirection
+
+== More Information
+
+* http://www.w3schools.com/html/html_forms.asp[Forms tutorial] from W3Schools
+* http://flask.pocoo.org/docs/0.10/quickstart/#the-request-object[Flask request object overview]
+* http://flask.pocoo.org/docs/0.10/api/#incoming-request-data[Flask request object reference]
+* http://flask.pocoo.org/docs/0.10/tutorial/views/[View functions] in Flask
+* http://flask.pocoo.org/docs/0.10/patterns/wtforms/[Form validation with WTForms]
+* https://flask-wtf.readthedocs.org/en/latest/[Flask-WTF extension] for WTForms
+* http://wtforms.readthedocs.org/en/latest/[WTForms home page]
+
